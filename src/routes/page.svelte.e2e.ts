@@ -1,6 +1,7 @@
 import { expect, test } from '@playwright/test';
 
-test('home page shows the application name', async ({ page }) => {
-	await page.goto('/');
-	await expect(page.getByRole('heading', { level: 1 })).toHaveText('Z_Pilot — Hôtel Zingana');
+test('a signed-out visitor is sent to the login page', async ({ page }) => {
+	await page.goto('/admin/utilisateurs');
+	await expect(page).toHaveURL(/\/login\?redirectTo=%2Fadmin%2Futilisateurs$/);
+	await expect(page.getByRole('heading', { level: 1 })).toHaveText('Connexion');
 });

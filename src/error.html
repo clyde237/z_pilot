@@ -1,0 +1,69 @@
+<!doctype html>
+<html lang="fr">
+	<head>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1" />
+		<title>%sveltekit.status% · Z_Pilot</title>
+		<style>
+			:root {
+				color-scheme: light dark;
+				--canvas: light-dark(oklch(0.976 0.011 90), oklch(0.19 0.04 252));
+				--surface: light-dark(oklch(0.995 0.004 90), oklch(0.23 0.045 252));
+				--ink: light-dark(oklch(0.248 0.061 251.5), oklch(0.95 0.012 90));
+				--muted: light-dark(oklch(0.45 0.03 252), oklch(0.78 0.02 90));
+				--line: light-dark(oklch(0.9 0.015 85), oklch(0.34 0.04 252));
+				--accent: oklch(0.675 0.113 75);
+				--accent-ink: light-dark(oklch(0.52 0.1 70), oklch(0.769 0.078 86));
+			}
+			body {
+				margin: 0;
+				min-height: 100dvh;
+				display: grid;
+				place-items: center;
+				padding: 16px;
+				box-sizing: border-box;
+				background: var(--canvas);
+				color: var(--ink);
+				font-family: ui-sans-serif, system-ui, sans-serif;
+			}
+			main {
+				max-width: 28rem;
+				width: 100%;
+				background: var(--surface);
+				border: 1px solid var(--line);
+				border-top: 3px solid var(--accent);
+				border-radius: 12px;
+				padding: 32px 24px;
+				text-align: center;
+			}
+			p.status {
+				margin: 0;
+				color: var(--accent-ink);
+				font-size: 0.8rem;
+				letter-spacing: 0.2em;
+				text-transform: uppercase;
+			}
+			h1 {
+				margin: 8px 0 12px;
+				font-family: ui-serif, Georgia, serif;
+				font-size: 1.75rem;
+			}
+			p.hint {
+				margin: 0 0 24px;
+				color: var(--muted);
+			}
+			a {
+				color: var(--ink);
+				font-weight: 600;
+			}
+		</style>
+	</head>
+	<body>
+		<main>
+			<p class="status">Erreur %sveltekit.status%</p>
+			<h1>%sveltekit.error.message%</h1>
+			<p class="hint">Cette page n’est pas disponible pour votre compte.</p>
+			<a href="/">Retour à l’accueil</a>
+		</main>
+	</body>
+</html>
