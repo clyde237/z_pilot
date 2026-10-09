@@ -8,6 +8,11 @@ for one department of ~15 users. UI in French. Source of truth: the CDC v1.0
 
 - No `svelte.config.js`: Kit options and the adapter live in `sveltekit({...})` in `vite.config.ts`.
 - Internal imports use `#lib/...` (Node subpath imports in `package.json`), not `$lib`.
+  They need a file extension: `#lib/domain/roles.js` for `roles.ts`, `#lib/server/db/index.js`
+  for the folder, `#lib/components/ui/Alert.svelte`. Relative imports may omit it.
+- Hook types come from `@sveltejs/kit/hooks` (`Handle`), not `@sveltejs/kit`.
+- Links: `resolve()` from `$app/paths` with a route ID including its group, e.g.
+  `resolve('/(app)/admin/utilisateurs/[id]', { id })` (ESLint enforces it).
 - Env vars are declared and validated in `src/env.ts` (`defineEnvVars` + Zod), read from
   `$app/env/private` / `$app/env/public`. Add every new variable there and in `.env.example`.
 - Remote functions (`$app/server` form/query/command) are still experimental: use form
@@ -19,6 +24,9 @@ for one department of ~15 users. UI in French. Source of truth: the CDC v1.0
 `npm run lint` → `npm run check` → `npm run test:unit -- --run` → `npm run build`.
 Build needs a syntactically valid `DATABASE_URL` (env is validated at build).
 Schema change: edit `src/lib/server/db/schema.ts`, then `npm run db:generate`; never `db:push` on a shared DB.
+First admin: `npm run admin:create -- --username … --name "…" [--chef] [--no-reports]`.
+DB tests use an in-memory PostgreSQL with the real migrations (`#lib/server/testing/database.js`):
+services take the `Database` as a parameter, never import the pool.
 
 ## Architecture rules
 
@@ -29,7 +37,10 @@ Schema change: edit `src/lib/server/db/schema.ts`, then `npm run db:generate`; n
   lives in `src/lib/domain/week.ts` (ISO weeks, `Africa/Douala`, Wednesday rule §5.2).
 - Weeks are keyed by their Monday (`week_start`, `date`). Timestamps are `timestamptz` (UTC).
 - Rights are checked on the server for every request (CDC §2 matrix). A member only ever
-  reads their own tasks and their own published reports.
+  reads their own tasks and their own published reports. Route rules live in
+  `src/lib/server/auth/access.ts` (`routeAccess`, enforced in `hooks.server.ts`); loads and
+  actions repeat the check with `requireUser(locals, requirement)`. Menus use the same
+  `meetsRequirement` from `src/lib/domain/roles.ts`.
 - Invariants are DB constraints first (see schema), app checks second (for messages).
 - Auth: custom sessions (token in HttpOnly cookie, SHA-256 hash in `sessions.token_hash`),
   passwords hashed with argon2id (`@node-rs/argon2`). No email anywhere in the MVP.

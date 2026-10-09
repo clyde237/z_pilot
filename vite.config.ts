@@ -25,6 +25,9 @@ export default defineConfig({
 				test: {
 					name: 'server',
 					environment: 'node',
+					// Database tests start an in-memory PostgreSQL (PGlite) per file.
+					hookTimeout: 60_000,
+					testTimeout: 20_000,
 					include: ['src/**/*.{test,spec}.{js,ts}'],
 					exclude: ['src/**/*.svelte.{test,spec}.{js,ts}']
 				}

@@ -32,8 +32,16 @@ cahier des charges v1.0 du 8 octobre 2026 (« CDC »), dont les identifiants
 npm install
 cp .env.example .env   # puis renseigner les valeurs
 npm run db:migrate     # applique les migrations du dossier drizzle/
+npm run admin:create -- --username clyde --name "Clyde Fanche" --chef
 npm run dev
 ```
+
+L'application n'a pas d'inscription libre : `admin:create` crée le premier
+administrateur et affiche **une seule fois** son mot de passe temporaire, à changer à la
+première connexion. Il refuse de s'exécuter si un administrateur actif existe déjà ; les
+comptes suivants se créent depuis _Administration › Utilisateurs_. Options : `--chef`
+(administrateur et chef de département), `--no-reports` (administrateur purement
+technique, exclu des tâches et des rapports).
 
 ## Variables d'environnement
 
@@ -64,6 +72,9 @@ npm run db:studio     # explore la base
 
 Ne pas utiliser `db:push` sur une base partagée : il modifie le schéma sans migration
 versionnée.
+
+Les tests des services (comptes, connexion, sessions) tournent sur un PostgreSQL en
+mémoire (PGlite) avec les vraies migrations : ils ne touchent jamais la base Neon.
 
 ## Commandes
 

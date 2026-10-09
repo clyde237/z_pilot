@@ -21,7 +21,8 @@
 		"db:push": "drizzle-kit push",
 		"db:generate": "drizzle-kit generate",
 		"db:migrate": "drizzle-kit migrate",
-		"db:studio": "drizzle-kit studio"
+		"db:studio": "drizzle-kit studio",
+		"admin:create": "node --env-file-if-exists=.env scripts/create-admin.ts"
 	},
 	"dependencies": {
 		"@date-fns/tz": "^1.5.0",
@@ -38,6 +39,7 @@
 		"zod": "^4.6.5"
 	},
 	"devDependencies": {
+		"@electric-sql/pglite": "^0.5.8",
 		"@eslint/js": "^10.0.1",
 		"@playwright/test": "^1.60.0",
 		"@sveltejs/adapter-vercel": "^7.0.0",

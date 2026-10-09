@@ -45,6 +45,7 @@
 	/* Gold for fills, bars and rules. Not for body text: too little contrast on cream. */
 	--color-accent: var(--color-gold-500);
 	--color-accent-ink: light-dark(var(--color-gold-700), var(--color-gold-400));
+	--color-accent-soft: light-dark(var(--color-gold-50), oklch(0.28 0.04 80));
 	--color-focus: light-dark(var(--color-gold-600), var(--color-gold-400));
 
 	--color-sidebar: light-dark(var(--color-navy-800), oklch(0.17 0.035 252));
@@ -97,5 +98,53 @@
 			transition-duration: 0.01ms !important;
 			scroll-behavior: auto !important;
 		}
+	}
+}
+
+/* Shared building blocks. Touch targets are at least 44px high (REC-10, phone use). */
+@layer components {
+	.card {
+		@apply rounded-xl border border-line bg-surface shadow-[0_1px_2px_oklch(0.25_0.06_252/0.06)];
+	}
+
+	.eyebrow {
+		@apply text-xs font-semibold tracking-[0.18em] text-accent-ink uppercase;
+	}
+
+	.btn {
+		@apply inline-flex min-h-11 items-center justify-center gap-2 rounded-lg px-4 py-2 text-sm font-semibold transition-colors disabled:cursor-not-allowed disabled:opacity-60;
+	}
+	.btn-primary {
+		@apply bg-brand text-on-brand hover:opacity-90;
+	}
+	.btn-secondary {
+		@apply border border-line bg-surface text-ink hover:bg-surface-muted;
+	}
+	.btn-danger {
+		@apply border border-danger/30 bg-danger-soft text-danger hover:border-danger/60;
+	}
+
+	.field-label {
+		@apply mb-1.5 block text-sm font-medium text-ink;
+	}
+	.input {
+		@apply block min-h-11 w-full rounded-lg border-line bg-surface px-3 py-2 text-ink placeholder:text-ink-muted/70 focus:border-focus focus:ring-2 focus:ring-focus/30;
+	}
+	.input[aria-invalid='true'] {
+		@apply border-danger;
+	}
+	.field-hint {
+		@apply mt-1.5 text-sm text-ink-muted;
+	}
+	.field-error {
+		@apply mt-1.5 text-sm font-medium text-danger;
+	}
+	/* The forms plugin draws the check mark in the base layer, which any component style
+	   overrides: only the unchecked background is set here. */
+	.checkbox {
+		@apply size-5 rounded border-line text-brand focus:ring-2 focus:ring-focus/40 disabled:opacity-60;
+	}
+	.checkbox:not(:checked) {
+		background-color: var(--color-surface);
 	}
 }
