@@ -1,0 +1,101 @@
+@import 'tailwindcss';
+@plugin '@tailwindcss/forms';
+@plugin '@tailwindcss/typography';
+
+/*
+ * Z_Pilot theme — navy and gold of the Hôtel Zingana logo on a warm cream canvas.
+ * Raw palette first, then semantic tokens. Components use the semantic tokens only
+ * (bg-canvas, text-ink, border-line…): each one holds its light and dark value via
+ * light-dark(), so no component needs a `dark:` variant.
+ */
+@theme {
+	--font-sans: 'Public Sans Variable', ui-sans-serif, system-ui, sans-serif;
+	--font-serif: 'Source Serif 4 Variable', ui-serif, Georgia, serif;
+
+	--color-navy-50: oklch(0.97 0.01 252);
+	--color-navy-100: oklch(0.93 0.02 252);
+	--color-navy-300: oklch(0.75 0.05 252);
+	--color-navy-500: oklch(0.5 0.08 252);
+	--color-navy-600: oklch(0.4 0.09 254);
+	--color-navy-700: oklch(0.306 0.096 256);
+	--color-navy-800: oklch(0.273 0.07 251.5);
+	--color-navy-900: oklch(0.248 0.061 251.5);
+	--color-navy-950: oklch(0.19 0.04 252);
+
+	--color-gold-50: oklch(0.97 0.015 85);
+	--color-gold-100: oklch(0.94 0.03 85);
+	--color-gold-200: oklch(0.88 0.05 85);
+	--color-gold-400: oklch(0.769 0.078 86);
+	--color-gold-500: oklch(0.675 0.113 75);
+	--color-gold-600: oklch(0.6 0.11 72);
+	--color-gold-700: oklch(0.52 0.1 70);
+
+	--color-cream: oklch(0.976 0.011 90);
+
+	/* Semantic tokens: light-dark(light value, dark value). */
+	--color-canvas: light-dark(var(--color-cream), var(--color-navy-950));
+	--color-surface: light-dark(oklch(0.995 0.004 90), oklch(0.23 0.045 252));
+	--color-surface-muted: light-dark(oklch(0.955 0.012 88), oklch(0.27 0.05 252));
+	--color-ink: light-dark(var(--color-navy-900), oklch(0.95 0.012 90));
+	--color-ink-muted: light-dark(oklch(0.45 0.03 252), oklch(0.78 0.02 90));
+	--color-line: light-dark(oklch(0.9 0.015 85), oklch(0.34 0.04 252));
+
+	--color-brand: light-dark(var(--color-navy-700), var(--color-gold-400));
+	--color-on-brand: light-dark(var(--color-cream), var(--color-navy-950));
+	/* Gold for fills, bars and rules. Not for body text: too little contrast on cream. */
+	--color-accent: var(--color-gold-500);
+	--color-accent-ink: light-dark(var(--color-gold-700), var(--color-gold-400));
+	--color-focus: light-dark(var(--color-gold-600), var(--color-gold-400));
+
+	--color-sidebar: light-dark(var(--color-navy-800), oklch(0.17 0.035 252));
+	--color-sidebar-ink: oklch(0.95 0.012 90);
+	--color-sidebar-active: light-dark(oklch(0.326 0.063 250), oklch(0.25 0.05 252));
+
+	--color-success: light-dark(oklch(0.48 0.1 155), oklch(0.78 0.12 155));
+	--color-success-soft: light-dark(oklch(0.95 0.04 155), oklch(0.3 0.05 155));
+	--color-warning: light-dark(oklch(0.52 0.12 60), oklch(0.8 0.12 70));
+	--color-warning-soft: light-dark(oklch(0.95 0.04 75), oklch(0.32 0.05 70));
+	--color-danger: light-dark(oklch(0.52 0.18 27), oklch(0.75 0.14 25));
+	--color-danger-soft: light-dark(oklch(0.95 0.03 25), oklch(0.32 0.06 25));
+}
+
+@layer base {
+	:root {
+		color-scheme: light dark;
+	}
+	:root[data-theme='light'] {
+		color-scheme: light;
+	}
+	:root[data-theme='dark'] {
+		color-scheme: dark;
+	}
+
+	html {
+		background-color: var(--color-canvas);
+		color: var(--color-ink);
+		font-family: var(--font-sans);
+	}
+
+	h1,
+	h2,
+	h3 {
+		font-family: var(--font-serif);
+		text-wrap: balance;
+	}
+
+	:focus-visible {
+		outline: 2px solid var(--color-focus);
+		outline-offset: 2px;
+	}
+
+	@media (prefers-reduced-motion: reduce) {
+		*,
+		::before,
+		::after {
+			animation-duration: 0.01ms !important;
+			animation-iteration-count: 1 !important;
+			transition-duration: 0.01ms !important;
+			scroll-behavior: auto !important;
+		}
+	}
+}
