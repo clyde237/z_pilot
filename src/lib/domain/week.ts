@@ -58,3 +58,8 @@ export function reportingMonthOf(weekStart: IsoDate): { year: number; month: num
 	const wednesday = addDays(parseIsoDate(weekStartOf(weekStart)), 2);
 	return { year: wednesday.getFullYear(), month: wednesday.getMonth() + 1 };
 }
+
+/** Shifts a week start by a given number of days (e.g. +7 for next week, -7 for previous week). */
+export function shiftWeek(weekStart: IsoDate, daysDelta: number): IsoDate {
+	return formatIsoDate(addDays(parseIsoDate(weekStartOf(weekStart)), daysDelta));
+}
