@@ -22,7 +22,8 @@ import {
 } from '#lib/server/db/schema.js';
 import type { Database } from '#lib/server/db/types.js';
 
-export interface MonthlyReportWithPublisher extends MonthlyReport {
+export interface MonthlyReportWithPublisher extends Omit<MonthlyReport, 'snapshot'> {
+	snapshot: MonthlyReportSnapshot;
 	publisherName?: string;
 	publisherUsername?: string;
 }
@@ -561,14 +562,20 @@ export async function getMonthlyReportById(
 		.innerJoin(users, eq(monthlyReports.generatedBy, users.id))
 		.where(eq(monthlyReports.id, id));
 
-	return report ?? null;
+	if (!report) return null;
+	return {
+		...report,
+		snapshot: report.snapshot as unknown as MonthlyReportSnapshot,
+		publisherName: report.publisherName ?? 'Chef de département',
+		publisherUsername: report.publisherUsername ?? ''
+	};
 }
 
 /**
  * Lists all generated monthly reports (ordered by year desc, month desc, version desc).
  */
 export async function listMonthlyReports(db: Database): Promise<MonthlyReportWithPublisher[]> {
-	return db
+	const rows = await db
 		.select({
 			id: monthlyReports.id,
 			year: monthlyReports.year,
@@ -585,4 +592,11 @@ export async function listMonthlyReports(db: Database): Promise<MonthlyReportWit
 		.from(monthlyReports)
 		.innerJoin(users, eq(monthlyReports.generatedBy, users.id))
 		.orderBy(desc(monthlyReports.year), desc(monthlyReports.month), desc(monthlyReports.version));
+
+	return rows.map((r) => ({
+		...r,
+		snapshot: r.snapshot as unknown as MonthlyReportSnapshot,
+		publisherName: r.publisherName ?? 'Chef de département',
+		publisherUsername: r.publisherUsername ?? ''
+	}));
 }

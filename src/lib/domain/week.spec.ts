@@ -2,6 +2,9 @@ import { describe, expect, it } from 'vitest';
 import {
 	currentWeekStart,
 	formatYearMonth,
+	isoDayOfWeek,
+	isLastWorkingDayOfMonth,
+	isLastWorkingDayOfWeek,
 	isoWeekOf,
 	monthWeeks,
 	parseYearMonth,
@@ -111,5 +114,34 @@ describe('parseYearMonth and formatYearMonth', () => {
 	it('rejects invalid year-month formats', () => {
 		expect(() => parseYearMonth('2026-13')).toThrow(RangeError);
 		expect(() => parseYearMonth('invalid')).toThrow(RangeError);
+	});
+});
+
+describe('isoDayOfWeek and working day checks (EF-NOT-03, RG-01)', () => {
+	const standardWorkingDays = [1, 2, 3, 4, 5]; // Mon to Fri
+
+	it('returns correct ISO day of week (1=Mon .. 7=Sun)', () => {
+		expect(isoDayOfWeek('2026-10-05')).toBe(1); // Monday
+		expect(isoDayOfWeek('2026-10-07')).toBe(3); // Wednesday
+		expect(isoDayOfWeek('2026-10-09')).toBe(5); // Friday
+		expect(isoDayOfWeek('2026-10-10')).toBe(6); // Saturday
+		expect(isoDayOfWeek('2026-10-11')).toBe(7); // Sunday
+	});
+
+	it('identifies the last working day of the week', () => {
+		expect(isLastWorkingDayOfWeek('2026-10-08', standardWorkingDays)).toBe(false); // Thursday
+		expect(isLastWorkingDayOfWeek('2026-10-09', standardWorkingDays)).toBe(true); // Friday
+		expect(isLastWorkingDayOfWeek('2026-10-10', standardWorkingDays)).toBe(false); // Saturday
+	});
+
+	it('identifies the last working day of the month', () => {
+		// October 2026 ends on Saturday 31st. Friday 30th is the last working day.
+		expect(isLastWorkingDayOfMonth('2026-10-29', standardWorkingDays)).toBe(false); // Thursday
+		expect(isLastWorkingDayOfMonth('2026-10-30', standardWorkingDays)).toBe(true); // Friday (last working day)
+		expect(isLastWorkingDayOfMonth('2026-10-31', standardWorkingDays)).toBe(false); // Saturday (not in working days)
+
+		// November 2026 ends on Monday 30th.
+		expect(isLastWorkingDayOfMonth('2026-11-27', standardWorkingDays)).toBe(false); // Friday 27th
+		expect(isLastWorkingDayOfMonth('2026-11-30', standardWorkingDays)).toBe(true); // Monday 30th (last day & working day)
 	});
 });

@@ -1,14 +1,22 @@
 <script lang="ts">
 	import { resolve } from '$app/paths';
+	import Bell from '@lucide/svelte/icons/bell';
+	import Calendar from '@lucide/svelte/icons/calendar';
+	import CalendarRange from '@lucide/svelte/icons/calendar-range';
+	import CheckCheck from '@lucide/svelte/icons/check-check';
+	import CheckSquare from '@lucide/svelte/icons/check-square';
+	import Clock from '@lucide/svelte/icons/clock';
+	import ExternalLink from '@lucide/svelte/icons/external-link';
+	import FileText from '@lucide/svelte/icons/file-text';
 	import LogOut from '@lucide/svelte/icons/log-out';
 	import Menu from '@lucide/svelte/icons/menu';
 	import X from '@lucide/svelte/icons/x';
 	import { MediaQuery } from 'svelte/reactivity';
-	import { afterNavigate } from '$app/navigation';
+	import { afterNavigate, invalidateAll } from '$app/navigation';
 	import { page } from '$app/state';
 	import mark from '#lib/assets/brand/z-pilot-mark.webp';
 	import { roleLabels } from '#lib/domain/roles.js';
-	import { initialsOf } from '#lib/format.js';
+	import { formatDateTime, initialsOf } from '#lib/format.js';
 	import { NAVIGATION_SECTIONS, navigationFor } from '#lib/navigation.js';
 
 	let { data, children } = $props();
@@ -16,6 +24,8 @@
 	// Below lg the sidebar is a drawer; true on the server so a desktop first paint stays usable.
 	const desktop = new MediaQuery('min-width: 1024px', true);
 	let menuOpen = $state(false);
+	let notifPanelOpen = $state(false);
+	let notifContainerRef = $state<HTMLDivElement | null>(null);
 
 	const sections = $derived.by(() => {
 		const items = navigationFor(data.user);
@@ -31,10 +41,70 @@
 		return current === route || current.startsWith(`${route}/`);
 	}
 
-	afterNavigate(() => (menuOpen = false));
+	function getNotificationIcon(type: string) {
+		switch (type) {
+			case 'daily_reminder':
+				return Clock;
+			case 'task_assigned':
+				return CheckSquare;
+			case 'week_ready_to_close':
+				return Calendar;
+			case 'month_ready':
+				return CalendarRange;
+			case 'weekly_report_published':
+				return FileText;
+			default:
+				return Bell;
+		}
+	}
+
+	async function handleMarkAsRead(id: string, link: string | null) {
+		try {
+			await fetch('/api/notifications/read', {
+				method: 'POST',
+				headers: { 'Content-Type': 'application/json' },
+				body: JSON.stringify({ id })
+			});
+			await invalidateAll();
+		} catch {
+			// ignore network error
+		}
+		notifPanelOpen = false;
+		if (link) {
+			window.location.href = link;
+		}
+	}
+
+	async function handleMarkAllAsRead() {
+		try {
+			await fetch('/api/notifications/read-all', {
+				method: 'POST'
+			});
+			await invalidateAll();
+		} catch {
+			// ignore network error
+		}
+	}
+
+	afterNavigate(() => {
+		menuOpen = false;
+		notifPanelOpen = false;
+	});
 </script>
 
-<svelte:window onkeydown={(event) => event.key === 'Escape' && (menuOpen = false)} />
+<svelte:window
+	onkeydown={(event) => {
+		if (event.key === 'Escape') {
+			menuOpen = false;
+			notifPanelOpen = false;
+		}
+	}}
+	onclick={(event) => {
+		if (notifPanelOpen && notifContainerRef && !notifContainerRef.contains(event.target as Node)) {
+			notifPanelOpen = false;
+		}
+	}}
+/>
 
 <a
 	href="#contenu"
@@ -135,6 +205,110 @@
 			</p>
 
 			<div class="ml-auto flex items-center gap-2">
+				<!-- Notification Bell & Dropdown (EF-NOT-01) -->
+				<div class="relative" bind:this={notifContainerRef}>
+					<button
+						type="button"
+						class="relative flex size-11 items-center justify-center rounded-lg text-ink-muted transition-colors hover:bg-surface-muted hover:text-ink"
+						aria-label="Notifications"
+						aria-expanded={notifPanelOpen}
+						onclick={() => (notifPanelOpen = !notifPanelOpen)}
+					>
+						<Bell class="size-5" aria-hidden="true" />
+						{#if data.unreadCount > 0}
+							<span
+								class="text-on-accent absolute top-2 right-2 flex size-4 animate-pulse items-center justify-center rounded-full bg-accent text-[10px] font-bold"
+							>
+								{data.unreadCount > 9 ? '9+' : data.unreadCount}
+							</span>
+						{/if}
+					</button>
+
+					{#if notifPanelOpen}
+						<div
+							class="absolute top-full right-0 z-50 mt-2 w-80 rounded-2xl border border-line bg-surface p-4 text-left shadow-xl sm:w-96"
+							role="region"
+							aria-label="Panneau des notifications"
+						>
+							<div class="flex items-center justify-between border-b border-line pb-3">
+								<div class="flex items-center gap-2">
+									<p class="text-sm font-semibold text-ink">Notifications</p>
+									{#if data.unreadCount > 0}
+										<span
+											class="rounded-full bg-accent-soft px-2 py-0.5 text-xs font-bold text-accent-ink"
+										>
+											{data.unreadCount}
+										</span>
+									{/if}
+								</div>
+								{#if data.unreadCount > 0}
+									<button
+										type="button"
+										class="flex items-center gap-1 text-xs font-semibold text-accent-ink hover:underline"
+										onclick={handleMarkAllAsRead}
+									>
+										<CheckCheck class="size-3.5" aria-hidden="true" />
+										<span>Tout marquer lu</span>
+									</button>
+								{/if}
+							</div>
+
+							<div class="max-h-80 divide-y divide-line/40 overflow-y-auto py-2">
+								{#if data.recentNotifications.length === 0}
+									<div class="py-8 text-center">
+										<p class="text-xs text-ink-muted">Aucune notification pour le moment.</p>
+									</div>
+								{:else}
+									{#each data.recentNotifications as notif (notif.id)}
+										{@const IconComponent = getNotificationIcon(notif.type)}
+										<div
+											class={[
+												'flex items-start gap-3 rounded-xl p-2.5 transition-colors',
+												notif.readAt
+													? 'hover:bg-surface-muted/50'
+													: 'bg-accent-soft/20 hover:bg-accent-soft/30'
+											]}
+										>
+											<div class="mt-0.5 shrink-0 text-accent-ink" aria-hidden="true">
+												<IconComponent class="size-4" />
+											</div>
+											<div class="min-w-0 flex-1 space-y-1">
+												<button
+													type="button"
+													class="block w-full cursor-pointer text-left text-xs leading-snug font-medium text-ink hover:underline"
+													onclick={() => handleMarkAsRead(notif.id, notif.link)}
+												>
+													{notif.message}
+												</button>
+												<div
+													class="flex items-center justify-between font-mono text-[11px] text-ink-muted"
+												>
+													<span>{formatDateTime(new Date(notif.createdAt))}</span>
+													{#if !notif.readAt}
+														<span class="size-1.5 rounded-full bg-accent" aria-label="Non lue"
+														></span>
+													{/if}
+												</div>
+											</div>
+										</div>
+									{/each}
+								{/if}
+							</div>
+
+							<div class="border-t border-line pt-2 text-center">
+								<a
+									href={resolve('/(app)/notifications')}
+									class="inline-flex items-center gap-1.5 text-xs font-semibold text-accent-ink hover:underline"
+									onclick={() => (notifPanelOpen = false)}
+								>
+									<span>Voir toutes les notifications</span>
+									<ExternalLink class="size-3" aria-hidden="true" />
+								</a>
+							</div>
+						</div>
+					{/if}
+				</div>
+
 				<a
 					href={resolve('/(app)/profil')}
 					class="flex min-h-11 items-center gap-3 rounded-lg px-2 hover:bg-surface-muted"

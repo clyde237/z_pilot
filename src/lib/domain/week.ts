@@ -11,7 +11,7 @@ const ISO_DATE_PATTERN = /^(\d{4})-(\d{2})-(\d{2})$/;
 
 // Calendar dates carry no time zone: computing on them in UTC keeps the result
 // independent of the server's local zone.
-function parseIsoDate(value: IsoDate): TZDate {
+export function parseIsoDate(value: IsoDate): TZDate {
 	const match = ISO_DATE_PATTERN.exec(value);
 	const date = match ? new TZDate(+match[1], +match[2] - 1, +match[3], 'UTC') : null;
 	if (!date || !isValid(date) || formatIsoDate(date) !== value) {
@@ -20,7 +20,7 @@ function parseIsoDate(value: IsoDate): TZDate {
 	return date;
 }
 
-function formatIsoDate(date: Date): IsoDate {
+export function formatIsoDate(date: Date): IsoDate {
 	return format(date, 'yyyy-MM-dd');
 }
 
@@ -107,4 +107,42 @@ export function parseYearMonth(param: string): { year: number; month: number } {
 	const month = Number(match[2]);
 	if (month < 1 || month > 12) throw new RangeError(`Invalid month: ${month}`);
 	return { year, month };
+}
+
+/** Returns ISO day of week: 1 (Monday) to 7 (Sunday). */
+export function isoDayOfWeek(date: IsoDate): number {
+	const d = parseIsoDate(date);
+	const day = d.getDay();
+	return day === 0 ? 7 : day;
+}
+
+/**
+ * Checks if `date` is the last working day of its ISO week (EF-NOT-03).
+ * Defaults to Friday when workingDays is standard [1, 2, 3, 4, 5].
+ */
+export function isLastWorkingDayOfWeek(date: IsoDate, workingDays: number[]): boolean {
+	const currentDay = isoDayOfWeek(date);
+	if (!workingDays.includes(currentDay)) return false;
+	const maxWorkingDay = Math.max(...workingDays);
+	return currentDay === maxWorkingDay;
+}
+
+/**
+ * Checks if `date` is the last working day of its calendar month (EF-NOT-03).
+ */
+export function isLastWorkingDayOfMonth(date: IsoDate, workingDays: number[]): boolean {
+	const d = parseIsoDate(date);
+	const currentDay = isoDayOfWeek(date);
+	if (!workingDays.includes(currentDay)) return false;
+
+	const currentMonth = d.getMonth();
+	let cursor = addDays(d, 1);
+	while (cursor.getMonth() === currentMonth) {
+		const isoDay = cursor.getDay() === 0 ? 7 : cursor.getDay();
+		if (workingDays.includes(isoDay)) {
+			return false;
+		}
+		cursor = addDays(cursor, 1);
+	}
+	return true;
 }
