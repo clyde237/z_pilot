@@ -6,6 +6,7 @@ describe('routeAccess', () => {
 		expect(routeAccess('/login')).toBe('public');
 		expect(routeAccess('/logout')).toBe('public');
 		expect(routeAccess('/api/cron/daily')).toBe('public');
+		expect(routeAccess('/api/settings/logo')).toBe('public');
 		expect(routeAccess('/admin/utilisateurs')).toBe('admin');
 		expect(routeAccess('/equipe/objectifs')).toBe('chef');
 		expect(routeAccess('/rapports/mensuel')).toBe('chef');

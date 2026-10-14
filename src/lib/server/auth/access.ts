@@ -14,6 +14,7 @@ const ROUTE_ACCESS: ReadonlyArray<readonly [prefix: string, access: RouteAccess]
 	[LOGOUT_PATH, 'public'],
 	// Authenticated by CRON_SECRET inside the route.
 	['/api/cron', 'public'],
+	['/api/settings/logo', 'public'],
 	['/admin', 'admin'],
 	['/equipe', 'chef'],
 	['/rapports', 'chef'],
