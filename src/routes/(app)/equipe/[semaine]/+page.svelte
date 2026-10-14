@@ -7,6 +7,7 @@
 	import ChevronDown from '@lucide/svelte/icons/chevron-down';
 	import ChevronUp from '@lucide/svelte/icons/chevron-up';
 	import Circle from '@lucide/svelte/icons/circle';
+	import Download from '@lucide/svelte/icons/download';
 	import FileText from '@lucide/svelte/icons/file-text';
 	import Target from '@lucide/svelte/icons/target';
 	import { ISO_DAY_NAMES, TASK_WEIGHT_LABELS } from '#lib/domain/tasks.js';
@@ -217,6 +218,18 @@
 
 					<!-- Action Controls -->
 					<div class="flex items-center gap-2 sm:justify-end">
+						{#if item.report?.status === 'published'}
+							<a
+								href={resolve('/api/export/hebdo/[id]', { id: item.report.id })}
+								download
+								class="btn btn-secondary inline-flex items-center gap-1.5 px-2.5 py-1.5 text-xs text-accent-ink"
+								title="Télécharger le rapport Word (.docx)"
+							>
+								<Download class="size-3.5" aria-hidden="true" />
+								<span class="hidden sm:inline">Word</span>
+							</a>
+						{/if}
+
 						<a
 							href={resolve('/(app)/rapports/hebdo/[semaine]/[memberId]', {
 								semaine: data.weekStart,
@@ -293,7 +306,7 @@
 														</span>
 													{/if}
 													<span class="text-[10px] text-ink-muted">
-														{TASK_WEIGHT_LABELS[task.weight] ?? `Poids ${task.weight}`}
+														{TASK_WEIGHT_LABELS[task.weight]?.shortLabel ?? `Poids ${task.weight}`}
 													</span>
 													{#if task.plannedDay}
 														<span class="text-[10px] text-ink-muted">

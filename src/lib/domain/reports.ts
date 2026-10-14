@@ -1,5 +1,24 @@
 import { formatWeekLabel } from '#lib/format.js';
 import type { WeeklyProgression } from './tasks.js';
+import { isoWeekOf } from './week.js';
+
+/**
+ * Generates a normalized filename for a weekly report Word export (EF-EXP-03).
+ * Format: Rapport_hebdo_Nom_2026-S41.docx
+ * Accents and special characters are stripped for cross-platform filesystem compatibility.
+ */
+export function formatWeeklyReportFilename(fullName: string, weekStart: string): string {
+	const { week, year } = isoWeekOf(weekStart);
+	const weekStr = String(week).padStart(2, '0');
+	const sanitizedName = fullName
+		.normalize('NFD')
+		.replace(/[\u0300-\u036f]/g, '')
+		.replace(/[^a-zA-Z0-9]+/g, '_')
+		.replace(/^_+|_+$/g, '');
+
+	const namePart = sanitizedName || 'Membre';
+	return `Rapport_hebdo_${namePart}_${year}-S${weekStr}.docx`;
+}
 
 export interface ReportTaskItem {
 	id: string;

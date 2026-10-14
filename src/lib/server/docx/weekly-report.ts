@@ -32,12 +32,26 @@ function cleanHex(color?: string | null): string {
 	return color.replace(/^#/, '').toUpperCase();
 }
 
-function parseBase64Image(dataUrl?: string | null): { buffer: Buffer; type: 'png' | 'jpg' } | null {
+function parseBase64Image(
+	dataUrl?: string | null
+): { buffer: Buffer; type: 'png' | 'jpg' | 'gif' | 'bmp' } | null {
 	if (!dataUrl || !dataUrl.startsWith('data:image/')) return null;
-	const match = dataUrl.match(/^data:image\/([a-zA-Z]+);base64,(.+)$/);
+	const match = dataUrl.match(/^data:image\/([a-zA-Z0-9+.-]+);base64,(.+)$/);
 	if (!match || !match[2]) return null;
 	try {
-		const type = match[1] === 'jpeg' || match[1] === 'jpg' ? 'jpg' : 'png';
+		const rawFormat = match[1].toLowerCase();
+		let type: 'png' | 'jpg' | 'gif' | 'bmp';
+		if (rawFormat === 'jpeg' || rawFormat === 'jpg') {
+			type = 'jpg';
+		} else if (rawFormat === 'png') {
+			type = 'png';
+		} else if (rawFormat === 'gif') {
+			type = 'gif';
+		} else if (rawFormat === 'bmp') {
+			type = 'bmp';
+		} else {
+			return null;
+		}
 		return { buffer: Buffer.from(match[2], 'base64'), type };
 	} catch {
 		return null;
@@ -141,6 +155,12 @@ export async function generateWeeklyReportDocx(snapshot: WeeklyReportSnapshot): 
 	});
 
 	// 2. Footer
+	const generationDateFr = new Date().toLocaleDateString('fr-FR', {
+		day: 'numeric',
+		month: 'numeric',
+		year: 'numeric'
+	});
+
 	const footerTable = new Table({
 		width: { size: 100, type: WidthType.PERCENTAGE },
 		borders: {
@@ -160,7 +180,7 @@ export async function generateWeeklyReportDocx(snapshot: WeeklyReportSnapshot): 
 							new Paragraph({
 								children: [
 									new TextRun({
-										text: `Rapport hebdomadaire · ${snapshot.member.fullName} · ${snapshot.weekLabel}`,
+										text: `Rapport hebdomadaire · ${snapshot.member.fullName} · ${snapshot.weekLabel} · Généré le ${generationDateFr}`,
 										size: 16,
 										font: FONT_FAMILY,
 										color: '777777'
@@ -947,12 +967,58 @@ export async function generateWeeklyReportDocx(snapshot: WeeklyReportSnapshot): 
 
 	// 4. Assemble document
 	const doc = new Document({
+		title: `Rapport hebdomadaire - ${snapshot.member.fullName} - ${snapshot.weekLabel}`,
+		description: `Rapport d’activité hebdomadaire pour ${snapshot.organizationName}`,
+		creator: snapshot.publishedBy.fullName,
+		lastModifiedBy: snapshot.publishedBy.fullName,
+		styles: {
+			default: {
+				document: {
+					run: {
+						font: FONT_FAMILY,
+						size: BASE_FONT_SIZE,
+						color: '333333'
+					},
+					paragraph: {
+						spacing: {
+							line: 276 // 1.15 line spacing (1.15 * 240)
+						}
+					}
+				},
+				heading1: {
+					run: {
+						font: FONT_FAMILY,
+						size: 26,
+						bold: true,
+						color: primaryColor
+					},
+					paragraph: {
+						spacing: { before: 240, after: 120 }
+					}
+				},
+				heading2: {
+					run: {
+						font: FONT_FAMILY,
+						size: 22,
+						bold: true,
+						color: '222222'
+					},
+					paragraph: {
+						spacing: { before: 180, after: 80 }
+					}
+				}
+			}
+		},
 		sections: [
 			{
 				properties: {
 					page: {
+						size: {
+							width: 11906, // A4 width (210 mm)
+							height: 16838 // A4 height (297 mm)
+						},
 						margin: {
-							top: 1134, // 2 cm
+							top: 1134, // 2 cm (20 mm)
 							bottom: 1134,
 							left: 1134,
 							right: 1134

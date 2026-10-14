@@ -288,7 +288,8 @@
 														</span>
 													{/if}
 													<span class="text-xs text-ink-muted">
-														({TASK_WEIGHT_LABELS[task.weight] ?? `Poids ${task.weight}`})
+														({TASK_WEIGHT_LABELS[task.weight]?.shortLabel ??
+															`Poids ${task.weight}`})
 													</span>
 												</div>
 												{#if task.note}
@@ -353,7 +354,9 @@
 						{#each snapshot.nextWeekPlan.plannedTasks as nextTask (nextTask.id)}
 							<div class="flex items-center justify-between p-3 text-sm">
 								<span class="font-medium text-ink">{nextTask.title}</span>
-								<span class="text-xs text-ink-muted">{TASK_WEIGHT_LABELS[nextTask.weight]}</span>
+								<span class="text-xs text-ink-muted">
+									{TASK_WEIGHT_LABELS[nextTask.weight]?.shortLabel ?? `Poids ${nextTask.weight}`}
+								</span>
 							</div>
 						{/each}
 					</div>
@@ -466,7 +469,7 @@
 												</span>
 											{/if}
 											<span class="text-xs text-ink-muted">
-												({TASK_WEIGHT_LABELS[task.weight] ?? `Poids ${task.weight}`})
+												({TASK_WEIGHT_LABELS[task.weight]?.shortLabel ?? `Poids ${task.weight}`})
 											</span>
 										</div>
 										{#if task.note}
@@ -544,7 +547,7 @@
 								<div class="flex items-center justify-between p-3 text-sm">
 									<span class="font-medium text-ink">{nextTask.title}</span>
 									<span class="text-xs text-ink-muted">
-										{TASK_WEIGHT_LABELS[nextTask.weight] ?? `Poids ${nextTask.weight}`}
+										{TASK_WEIGHT_LABELS[nextTask.weight]?.shortLabel ?? `Poids ${nextTask.weight}`}
 									</span>
 								</div>
 							{/each}
