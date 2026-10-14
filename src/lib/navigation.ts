@@ -1,6 +1,7 @@
 import House from '@lucide/svelte/icons/house';
 import ScrollText from '@lucide/svelte/icons/scroll-text';
 import Settings from '@lucide/svelte/icons/settings';
+import Target from '@lucide/svelte/icons/target';
 import UserRound from '@lucide/svelte/icons/user-round';
 import UsersRound from '@lucide/svelte/icons/users-round';
 import type { Component } from 'svelte';
@@ -12,6 +13,7 @@ export interface NavigationItem {
 	/** Route ID without parameters, passed to `resolve()`. */
 	route:
 		| '/(app)/mon-espace'
+		| '/(app)/equipe/objectifs'
 		| '/(app)/admin/utilisateurs'
 		| '/(app)/admin/parametres'
 		| '/(app)/admin/journal'
@@ -30,6 +32,13 @@ const NAVIGATION: NavigationItem[] = [
 		label: 'Mon espace',
 		icon: House,
 		requirement: 'member',
+		section: 'Suivi'
+	},
+	{
+		route: '/(app)/equipe/objectifs',
+		label: 'Objectifs équipe',
+		icon: Target,
+		requirement: 'chef',
 		section: 'Suivi'
 	},
 	{

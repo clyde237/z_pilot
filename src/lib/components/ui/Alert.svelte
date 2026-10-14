@@ -1,10 +1,11 @@
 <script lang="ts">
 	import CircleAlert from '@lucide/svelte/icons/circle-alert';
 	import CircleCheck from '@lucide/svelte/icons/circle-check';
+	import TriangleAlert from '@lucide/svelte/icons/triangle-alert';
 	import type { Snippet } from 'svelte';
 
 	interface Props {
-		tone: 'danger' | 'success';
+		tone: 'danger' | 'success' | 'warning';
 		children: Snippet;
 	}
 
@@ -15,13 +16,15 @@
 	role={tone === 'danger' ? 'alert' : 'status'}
 	class={[
 		'flex items-start gap-3 rounded-lg border px-4 py-3 text-sm',
-		tone === 'danger'
-			? 'border-danger/30 bg-danger-soft text-danger'
-			: 'border-success/30 bg-success-soft text-success'
+		tone === 'danger' && 'border-danger/30 bg-danger-soft text-danger',
+		tone === 'success' && 'border-success/30 bg-success-soft text-success',
+		tone === 'warning' && 'border-warning/30 bg-warning-soft text-warning'
 	]}
 >
 	{#if tone === 'danger'}
 		<CircleAlert class="mt-0.5 size-4 shrink-0" aria-hidden="true" />
+	{:else if tone === 'warning'}
+		<TriangleAlert class="mt-0.5 size-4 shrink-0" aria-hidden="true" />
 	{:else}
 		<CircleCheck class="mt-0.5 size-4 shrink-0" aria-hidden="true" />
 	{/if}

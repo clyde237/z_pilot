@@ -1,4 +1,4 @@
-import { TIME_ZONE } from '#lib/domain/week.js';
+import { isoWeekOf, TIME_ZONE, weekDays } from '#lib/domain/week.js';
 
 // CDC §10: French interface, dd/mm/yyyy dates, Africa/Douala time zone.
 
@@ -33,4 +33,42 @@ export function initialsOf(fullName: string): string {
 		.slice(0, 2)
 		.map((part) => part[0].toUpperCase())
 		.join('');
+}
+
+const MONTH_NAMES_FR = [
+	'janvier',
+	'février',
+	'mars',
+	'avril',
+	'mai',
+	'juin',
+	'juillet',
+	'août',
+	'septembre',
+	'octobre',
+	'novembre',
+	'décembre'
+];
+
+/** Formats a week range, e.g. "Semaine 41 · du 5 au 11 octobre 2026" (CDC §9). */
+export function formatWeekLabel(weekStart: string): string {
+	const days = weekDays(weekStart);
+	const { week } = isoWeekOf(weekStart);
+
+	const [monY, monM, monD] = days[0].split('-').map(Number);
+	const [sunY, sunM, sunD] = days[6].split('-').map(Number);
+
+	const monMonth = MONTH_NAMES_FR[monM - 1];
+	const sunMonth = MONTH_NAMES_FR[sunM - 1];
+
+	let range: string;
+	if (monY !== sunY) {
+		range = `du ${monD} ${monMonth} ${monY} au ${sunD} ${sunMonth} ${sunY}`;
+	} else if (monM !== sunM) {
+		range = `du ${monD} ${monMonth} au ${sunD} ${sunMonth} ${sunY}`;
+	} else {
+		range = `du ${monD} au ${sunD} ${sunMonth} ${sunY}`;
+	}
+
+	return `Semaine ${week} · ${range}`;
 }
