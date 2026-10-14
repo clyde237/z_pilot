@@ -43,13 +43,6 @@ const NAVIGATION: NavigationItem[] = [
 		section: 'Suivi'
 	},
 	{
-		route: '/(app)/mes-rapports',
-		label: 'Mes rapports',
-		icon: FileText,
-		requirement: 'member',
-		section: 'Suivi'
-	},
-	{
 		route: '/(app)/equipe',
 		label: 'Tableau de bord',
 		icon: LayoutDashboard,
@@ -61,6 +54,13 @@ const NAVIGATION: NavigationItem[] = [
 		label: 'Objectifs équipe',
 		icon: Target,
 		requirement: 'chef',
+		section: 'Suivi'
+	},
+	{
+		route: '/(app)/mes-rapports',
+		label: 'Mes rapports',
+		icon: FileText,
+		requirement: 'member',
 		section: 'Suivi'
 	},
 	{
