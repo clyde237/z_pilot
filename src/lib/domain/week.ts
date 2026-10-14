@@ -63,3 +63,48 @@ export function reportingMonthOf(weekStart: IsoDate): { year: number; month: num
 export function shiftWeek(weekStart: IsoDate, daysDelta: number): IsoDate {
 	return formatIsoDate(addDays(parseIsoDate(weekStartOf(weekStart)), daysDelta));
 }
+
+/**
+ * Returns all Monday week starts belonging to a given calendar month (CDC §5.2).
+ * A week belongs to the month that contains its Wednesday.
+ */
+export function monthWeeks(year: number, month: number): IsoDate[] {
+	if (month < 1 || month > 12) {
+		throw new RangeError(`Invalid month: ${month}`);
+	}
+	const firstDay = new TZDate(year, month - 1, 1, 'UTC');
+	let candidate = weekStartOf(formatIsoDate(firstDay));
+
+	const targetMonth = reportingMonthOf(candidate);
+	if (targetMonth.year < year || (targetMonth.year === year && targetMonth.month < month)) {
+		candidate = shiftWeek(candidate, 7);
+	}
+
+	const weeks: IsoDate[] = [];
+	while (true) {
+		const rep = reportingMonthOf(candidate);
+		if (rep.year === year && rep.month === month) {
+			weeks.push(candidate);
+			candidate = shiftWeek(candidate, 7);
+		} else {
+			break;
+		}
+	}
+
+	return weeks;
+}
+
+/** Formats month parameter as YYYY-MM. */
+export function formatYearMonth(year: number, month: number): string {
+	return `${year}-${String(month).padStart(2, '0')}`;
+}
+
+/** Parses month parameter string `YYYY-MM`. */
+export function parseYearMonth(param: string): { year: number; month: number } {
+	const match = /^(\d{4})-(\d{2})$/.exec(param);
+	if (!match) throw new RangeError(`Invalid year-month: ${param}`);
+	const year = Number(match[1]);
+	const month = Number(match[2]);
+	if (month < 1 || month > 12) throw new RangeError(`Invalid month: ${month}`);
+	return { year, month };
+}

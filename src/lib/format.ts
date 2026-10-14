@@ -72,3 +72,9 @@ export function formatWeekLabel(weekStart: string): string {
 
 	return `Semaine ${week} · ${range}`;
 }
+
+/** Formats a month label, e.g. "Octobre 2026". */
+export function formatMonthLabel(year: number, month: number): string {
+	const name = MONTH_NAMES_FR[month - 1] ?? '';
+	return `${name.charAt(0).toUpperCase()}${name.slice(1)} ${year}`;
+}

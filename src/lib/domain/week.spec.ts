@@ -1,7 +1,10 @@
 import { describe, expect, it } from 'vitest';
 import {
 	currentWeekStart,
+	formatYearMonth,
 	isoWeekOf,
+	monthWeeks,
+	parseYearMonth,
 	reportingMonthOf,
 	todayInTimeZone,
 	weekDays,
@@ -78,5 +81,35 @@ describe('reportingMonthOf', () => {
 		expect(reportingMonthOf('2027-12-27')).toEqual({ year: 2027, month: 12 });
 		// Wednesday 2025-12-31 → December 2025, although the week ends in 2026.
 		expect(reportingMonthOf('2025-12-29')).toEqual({ year: 2025, month: 12 });
+	});
+});
+
+describe('monthWeeks', () => {
+	it('returns all weeks attached to October 2026 (S41 to S44) per CDC §5.2', () => {
+		expect(monthWeeks(2026, 10)).toEqual(['2026-10-05', '2026-10-12', '2026-10-19', '2026-10-26']);
+	});
+
+	it('includes S40 (2026-09-28) in September 2026 because its Wednesday is 30 September', () => {
+		const septWeeks = monthWeeks(2026, 9);
+		expect(septWeeks).toContain('2026-09-28');
+		expect(septWeeks).toHaveLength(5);
+	});
+
+	it('rejects invalid month numbers', () => {
+		expect(() => monthWeeks(2026, 0)).toThrow(RangeError);
+		expect(() => monthWeeks(2026, 13)).toThrow(RangeError);
+	});
+});
+
+describe('parseYearMonth and formatYearMonth', () => {
+	it('parses and formats YYYY-MM correctly', () => {
+		expect(parseYearMonth('2026-10')).toEqual({ year: 2026, month: 10 });
+		expect(formatYearMonth(2026, 10)).toBe('2026-10');
+		expect(formatYearMonth(2026, 4)).toBe('2026-04');
+	});
+
+	it('rejects invalid year-month formats', () => {
+		expect(() => parseYearMonth('2026-13')).toThrow(RangeError);
+		expect(() => parseYearMonth('invalid')).toThrow(RangeError);
 	});
 });

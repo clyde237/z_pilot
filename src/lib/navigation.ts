@@ -1,3 +1,4 @@
+import CalendarRange from '@lucide/svelte/icons/calendar-range';
 import ClipboardCheck from '@lucide/svelte/icons/clipboard-check';
 import FileText from '@lucide/svelte/icons/file-text';
 import House from '@lucide/svelte/icons/house';
@@ -20,6 +21,7 @@ export interface NavigationItem {
 		| '/(app)/equipe'
 		| '/(app)/equipe/objectifs'
 		| '/(app)/rapports/hebdo'
+		| '/(app)/rapports/mensuel'
 		| '/(app)/admin/utilisateurs'
 		| '/(app)/admin/parametres'
 		| '/(app)/admin/journal'
@@ -65,6 +67,13 @@ const NAVIGATION: NavigationItem[] = [
 		route: '/(app)/rapports/hebdo',
 		label: 'Rapports hebdo',
 		icon: ClipboardCheck,
+		requirement: 'chef',
+		section: 'Suivi'
+	},
+	{
+		route: '/(app)/rapports/mensuel',
+		label: 'Rapport mensuel',
+		icon: CalendarRange,
 		requirement: 'chef',
 		section: 'Suivi'
 	},

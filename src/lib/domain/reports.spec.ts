@@ -1,5 +1,10 @@
 import { describe, expect, it } from 'vitest';
-import { buildWeeklyReportSnapshot } from './reports.js';
+import {
+	buildWeeklyReportSnapshot,
+	formatMonthlyReportFilename,
+	generateMonthlyConclusionTemplate,
+	generateMonthlyIntroTemplate
+} from './reports.js';
 import { computeWeeklyProgression } from './tasks.js';
 import { weekDays } from './week.js';
 
@@ -84,5 +89,42 @@ describe('buildWeeklyReportSnapshot', () => {
 		// Next week plan
 		expect(snapshot.nextWeekPlan.plannedTasks).toHaveLength(1);
 		expect(snapshot.nextWeekPlan.customText).toBe('Prévoir un point d’étape mercredi matin.');
+	});
+});
+
+describe('formatMonthlyReportFilename', () => {
+	it('generates normalized filename adhering to EF-EXP-03 (Rapport_mensuel_YYYY-MM.docx)', () => {
+		expect(formatMonthlyReportFilename(2026, 10)).toBe('Rapport_mensuel_2026-10.docx');
+		expect(formatMonthlyReportFilename(2026, 4)).toBe('Rapport_mensuel_2026-04.docx');
+	});
+});
+
+describe('generateMonthlyIntroTemplate & generateMonthlyConclusionTemplate', () => {
+	it('generates coherent French prose for monthly introduction (CDC §5.3)', () => {
+		const intro = generateMonthlyIntroTemplate({
+			monthLabel: 'Octobre 2026',
+			teamAveragePct: 87,
+			totalCompleted: 52,
+			totalAssigned: 60,
+			previousEvolutionPct: 4,
+			weeksRangeLabel: 'S41 à S44',
+			membersCount: 4
+		});
+
+		expect(intro).toContain('octobre 2026');
+		expect(intro).toContain('87 %');
+		expect(intro).toContain('52 tâches sur 60');
+		expect(intro).toContain('+4 points par rapport au mois précédent');
+		expect(intro).toContain('S41 à S44');
+	});
+
+	it('generates coherent French prose for monthly conclusion', () => {
+		const conclusion = generateMonthlyConclusionTemplate({
+			monthLabel: 'Octobre 2026',
+			teamAveragePct: 85
+		});
+
+		expect(conclusion).toContain('octobre 2026');
+		expect(conclusion).toContain('très satisfaisante');
 	});
 });
