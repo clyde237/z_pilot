@@ -80,7 +80,10 @@ export const actions: Actions = {
 	},
 
 	reopen: async ({ locals, request }) => {
-		const chef = requireUser(locals, 'chef');
+		const user = requireUser(locals, 'authenticated');
+		if (!user.isChef && !user.isAdmin) {
+			error(403, 'Accès réservé au chef de département ou à l’administrateur.');
+		}
 		const formData = await request.formData();
 		const reportId = String(formData.get('reportId') ?? '');
 		const reopenedReason = String(formData.get('reopenedReason') ?? '');
@@ -94,7 +97,7 @@ export const actions: Actions = {
 
 		try {
 			await reopenWeeklyReport(db, {
-				chefId: chef.id,
+				chefId: user.id,
 				reportId,
 				reason: parsed.data.reopenedReason
 			});

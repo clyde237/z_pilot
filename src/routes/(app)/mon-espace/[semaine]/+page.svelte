@@ -5,6 +5,8 @@
 	import ChevronLeft from '@lucide/svelte/icons/chevron-left';
 	import ChevronRight from '@lucide/svelte/icons/chevron-right';
 	import Lock from '@lucide/svelte/icons/lock';
+	import Unlock from '@lucide/svelte/icons/unlock';
+	import X from '@lucide/svelte/icons/x';
 	import Alert from '#lib/components/ui/Alert.svelte';
 	import { ISO_DAY_NAMES, TASK_WEIGHT_LABELS } from '#lib/domain/tasks.js';
 	import { formatWeekLabel } from '#lib/format.js';
@@ -16,6 +18,9 @@
 	const isLocked = $derived(week.isLocked);
 
 	let savingDifficulties = $state(false);
+	let showReopenModal = $state(false);
+	let reopenedReason = $state('');
+	let isReopening = $state(false);
 </script>
 
 <svelte:head>
@@ -65,13 +70,55 @@
 {#if isLocked}
 	<div class="mt-6">
 		<Alert tone="danger">
+			<div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+				<div>
+					<div class="flex items-center gap-2 font-medium">
+						<Lock class="size-4 shrink-0" aria-hidden="true" />
+						<span>Cette semaine est clôturée et le rapport hebdomadaire est publié.</span>
+					</div>
+					<p class="mt-1 text-xs opacity-90">
+						Vos tâches, notes et difficultés sont désormais figées en lecture seule (RG-06).
+					</p>
+				</div>
+				{#if data.canReopen}
+					<button
+						type="button"
+						class="btn btn-secondary inline-flex items-center gap-1.5 self-start border-danger/30 px-3 py-1.5 text-xs font-semibold text-danger hover:bg-danger-soft sm:self-center"
+						onclick={() => {
+							reopenedReason = '';
+							showReopenModal = true;
+						}}
+					>
+						<Unlock class="size-3.5" aria-hidden="true" />
+						<span>Rouvrir cette semaine</span>
+					</button>
+				{/if}
+			</div>
+		</Alert>
+	</div>
+{:else if data.reopenedInfo}
+	<div class="mt-6">
+		<Alert tone="warning">
 			<div class="flex items-center gap-2 font-medium">
-				<Lock class="size-4 shrink-0" aria-hidden="true" />
-				<span>Cette semaine est clôturée et le rapport hebdomadaire est publié.</span>
+				<Unlock class="size-4 shrink-0" aria-hidden="true" />
+				<span>Cette semaine a été rouverte (version {data.reopenedInfo.version}).</span>
 			</div>
 			<p class="mt-1 text-xs opacity-90">
-				Vos tâches, notes et difficultés sont désormais figées en lecture seule (RG-06).
+				Vos tâches, notes et difficultés sont à nouveau modifiables avant la prochaine clôture.
+				{#if data.reopenedInfo.reason}
+					<span class="mt-0.5 block font-normal italic">Motif : « {data.reopenedInfo.reason} »</span
+					>
+				{/if}
 			</p>
+		</Alert>
+	</div>
+{/if}
+
+{#if form?.reopened}
+	<div class="mt-4">
+		<Alert tone="success">
+			La semaine a été rouverte avec succès. Vous pouvez désormais modifier vos tâches, notes et
+			difficultés.
 		</Alert>
 	</div>
 {/if}
@@ -321,3 +368,97 @@
 		{/if}
 	</form>
 </section>
+
+{#if showReopenModal}
+	<div
+		class="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm"
+		role="dialog"
+		aria-modal="true"
+		aria-labelledby="reopen-modal-title"
+	>
+		<div class="card w-full max-w-lg p-6 shadow-xl sm:p-8">
+			<div class="flex items-start justify-between gap-4">
+				<div class="flex items-center gap-3">
+					<div
+						class="flex size-10 shrink-0 items-center justify-center rounded-full bg-warning-soft text-warning"
+					>
+						<Unlock class="size-5" aria-hidden="true" />
+					</div>
+					<div>
+						<h3 id="reopen-modal-title" class="text-lg font-semibold text-ink">
+							Rouvrir la semaine clôturée
+						</h3>
+						<p class="text-xs text-ink-muted">
+							Action réservée ({data.userRoleLabel}) · Règle RG-06
+						</p>
+					</div>
+				</div>
+				<button
+					type="button"
+					class="rounded-lg p-1 text-ink-muted hover:bg-surface-muted hover:text-ink"
+					onclick={() => (showReopenModal = false)}
+					aria-label="Fermer"
+				>
+					<X class="size-5" aria-hidden="true" />
+				</button>
+			</div>
+
+			<p class="mt-4 text-sm leading-relaxed text-ink-muted">
+				En rouvrant cette semaine, le rapport hebdomadaire repassera au statut
+				<span class="font-medium text-ink">« rouvert »</span>. Vos tâches, notes et difficultés
+				seront de nouveau modifiables jusqu'à la prochaine publication.
+			</p>
+
+			<form
+				method="POST"
+				action="?/reopenWeek"
+				use:enhance={() => {
+					isReopening = true;
+					return async ({ update }) => {
+						isReopening = false;
+						showReopenModal = false;
+						await update();
+					};
+				}}
+				class="mt-5 space-y-4"
+			>
+				<div>
+					<label for="reopenedReason" class="label text-xs font-semibold">
+						Motif de la réouverture <span class="text-danger">*</span>
+					</label>
+					<textarea
+						id="reopenedReason"
+						name="reopenedReason"
+						rows="3"
+						required
+						minlength="3"
+						maxlength="500"
+						bind:value={reopenedReason}
+						placeholder="Ex. : Erreur de saisie, ajout d'une tâche omise, mise à jour des valeurs..."
+						class="textarea mt-1 w-full text-sm"></textarea>
+					<p class="mt-1 text-xs text-ink-muted">
+						Au moins 3 caractères. Ce motif sera consigné dans le journal d'audit.
+					</p>
+				</div>
+
+				<div class="flex items-center justify-end gap-3 pt-2">
+					<button
+						type="button"
+						class="btn btn-secondary px-4 py-2 text-sm"
+						onclick={() => (showReopenModal = false)}
+						disabled={isReopening}
+					>
+						Annuler
+					</button>
+					<button
+						type="submit"
+						class="btn btn-primary px-4 py-2 text-sm"
+						disabled={isReopening || reopenedReason.trim().length < 3}
+					>
+						{isReopening ? 'Réouverture en cours...' : 'Confirmer la réouverture'}
+					</button>
+				</div>
+			</form>
+		</div>
+	</div>
+{/if}

@@ -9,6 +9,8 @@
 	import Lock from '@lucide/svelte/icons/lock';
 	import Pencil from '@lucide/svelte/icons/pencil';
 	import Plus from '@lucide/svelte/icons/plus';
+	import Unlock from '@lucide/svelte/icons/unlock';
+	import X from '@lucide/svelte/icons/x';
 	import Alert from '#lib/components/ui/Alert.svelte';
 	import ConfirmAction from '#lib/components/ui/ConfirmAction.svelte';
 	import { ISO_DAY_NAMES, TASK_WEIGHT_LABELS } from '#lib/domain/tasks.js';
@@ -21,8 +23,18 @@
 
 	let createModal: HTMLDialogElement;
 	let editModal: HTMLDialogElement;
+	let reopenModal: HTMLDialogElement;
 
 	let editingTask = $state<TaskItem | null>(null);
+	let reopenTarget = $state<{ memberId: string; memberName: string } | null>(null);
+	let reopenReason = $state('');
+	let isReopening = $state(false);
+
+	function openReopenModal(memberId: string, memberName: string) {
+		reopenTarget = { memberId, memberName };
+		reopenReason = '';
+		reopenModal.showModal();
+	}
 
 	// Create task form state
 	let selectedMemberIds = $state<string[]>([]);
@@ -213,6 +225,16 @@
 								</button>
 							</form>
 						{/if}
+					{:else}
+						<button
+							type="button"
+							class="btn btn-secondary inline-flex items-center gap-1.5 border-warning/40 px-2.5 py-1.5 text-xs font-semibold text-warning hover:bg-warning-soft"
+							onclick={() => openReopenModal(m.member.id, m.member.fullName)}
+							title="Rouvrir cette semaine pour ce membre (RG-06)"
+						>
+							<Unlock class="size-3.5" aria-hidden="true" />
+							<span>Rouvrir la semaine</span>
+						</button>
 					{/if}
 				</div>
 			</div>
@@ -647,6 +669,97 @@
 					Annuler
 				</button>
 				<button class="btn btn-primary">Enregistrer les modifications</button>
+			</div>
+		</form>
+	{/if}
+</dialog>
+
+<dialog
+	bind:this={reopenModal}
+	class="modal-backdrop w-full max-w-lg rounded-2xl bg-surface p-6 shadow-2xl backdrop:bg-black/60 sm:p-8"
+>
+	{#if reopenTarget}
+		<div class="flex items-start justify-between gap-4">
+			<div class="flex items-center gap-3">
+				<div
+					class="flex size-10 shrink-0 items-center justify-center rounded-full bg-warning-soft text-warning"
+				>
+					<Unlock class="size-5" aria-hidden="true" />
+				</div>
+				<div>
+					<h3 class="text-lg font-semibold text-ink">Rouvrir la semaine clôturée</h3>
+					<p class="text-xs text-ink-muted">
+						Membre : <span class="font-medium text-ink">{reopenTarget.memberName}</span> · Règle RG-06
+					</p>
+				</div>
+			</div>
+			<button
+				type="button"
+				class="rounded-lg p-1 text-ink-muted hover:bg-surface-muted hover:text-ink"
+				onclick={() => reopenModal.close()}
+				aria-label="Fermer"
+			>
+				<X class="size-5" aria-hidden="true" />
+			</button>
+		</div>
+
+		<p class="mt-4 text-sm leading-relaxed text-ink-muted">
+			En rouvrant la semaine de ce membre, son rapport hebdomadaire repassera au statut
+			<span class="font-medium text-ink">« rouvert »</span>. Ses objectifs et difficultés seront de
+			nouveau modifiables pour effectuer des corrections.
+		</p>
+
+		<form
+			method="POST"
+			action="?/reopenMemberWeek"
+			use:enhance={() => {
+				isReopening = true;
+				return async ({ update }) => {
+					isReopening = false;
+					reopenModal.close();
+					await update();
+				};
+			}}
+			class="mt-5 space-y-4"
+		>
+			<input type="hidden" name="memberId" value={reopenTarget.memberId} />
+
+			<div>
+				<label for="memberReopenReason" class="label text-xs font-semibold">
+					Motif de réouverture <span class="text-danger">*</span>
+				</label>
+				<textarea
+					id="memberReopenReason"
+					name="reopenedReason"
+					rows="3"
+					required
+					minlength="3"
+					maxlength="500"
+					bind:value={reopenReason}
+					placeholder="Ex. : Modification des objectifs, rectification des résultats..."
+					class="textarea mt-1 w-full text-sm"></textarea>
+				<p class="mt-1 text-xs text-ink-muted">
+					Au moins 3 caractères. Ce motif sera consigné dans le journal d'audit et notifié au
+					membre.
+				</p>
+			</div>
+
+			<div class="mt-6 flex justify-end gap-3">
+				<button
+					type="button"
+					class="btn btn-secondary px-4 py-2 text-sm"
+					onclick={() => reopenModal.close()}
+					disabled={isReopening}
+				>
+					Annuler
+				</button>
+				<button
+					type="submit"
+					class="btn btn-primary px-4 py-2 text-sm"
+					disabled={isReopening || reopenReason.trim().length < 3}
+				>
+					{isReopening ? 'Réouverture...' : 'Confirmer la réouverture'}
+				</button>
 			</div>
 		</form>
 	{/if}

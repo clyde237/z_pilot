@@ -11,6 +11,7 @@ import {
 	getWeekReportsOverview,
 	prepareWeeklyReportData,
 	publishWeeklyReport,
+	reopenMemberWeek,
 	reopenWeeklyReport
 } from './reports.js';
 import { isWeekLocked } from './tasks.js';
@@ -266,5 +267,82 @@ describe('reports server service', () => {
 		const overview = await getWeekReportsOverview(db, weekStart);
 		expect(overview.publishedCount).toBe(3);
 		expect(overview.totalMembers).toBe(3);
+	});
+
+	it('reopens member week via reopenMemberWeek, unlocks tasks, and verifies audit log (EF-HEB-06, RG-06)', async () => {
+		const [admin] = await db
+			.insert(users)
+			.values({
+				username: 'admin_reopen',
+				fullName: 'Admin Test',
+				passwordHash: 'hash',
+				isAdmin: true,
+				isChef: false,
+				participatesInReports: false,
+				active: true
+			})
+			.returning();
+
+		const [chef] = await db
+			.insert(users)
+			.values({
+				username: 'chef_reopen',
+				fullName: 'Chef Test',
+				passwordHash: 'hash',
+				isAdmin: false,
+				isChef: true,
+				participatesInReports: true,
+				active: true
+			})
+			.returning();
+
+		const [member] = await db
+			.insert(users)
+			.values({
+				username: 'member_reopen',
+				fullName: 'Member Test',
+				passwordHash: 'hash',
+				isAdmin: false,
+				isChef: false,
+				participatesInReports: true,
+				active: true
+			})
+			.returning();
+
+		const weekStart = '2026-10-12';
+
+		// Publish report
+		await publishWeeklyReport(db, {
+			chefId: chef.id,
+			memberId: member.id,
+			weekStart
+		});
+
+		expect(await isWeekLocked(db, member.id, weekStart)).toBe(true);
+
+		// Admin can reopen member week
+		const result = await reopenMemberWeek(db, {
+			operatorId: admin.id,
+			memberId: member.id,
+			weekStart,
+			reason: 'Réouverture par l’administrateur pour régularisation'
+		});
+
+		expect(result.reportId).toBeDefined();
+		expect(await isWeekLocked(db, member.id, weekStart)).toBe(false);
+
+		const report = await getWeeklyReportById(db, result.reportId);
+		expect(report?.status).toBe('reopened');
+		expect(report?.reopenedReason).toBe('Réouverture par l’administrateur pour régularisation');
+
+		// Attempting to reopen when already reopened should fail
+		await expect(
+			reopenMemberWeek(db, {
+				operatorId: chef.id,
+				memberId: member.id,
+				weekStart,
+				reason: 'Tentative de réouverture doublon'
+			})
+		).rejects.toThrow('Aucun rapport hebdomadaire publié trouvé pour cette semaine.');
 	});
 });

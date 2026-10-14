@@ -460,6 +460,44 @@ export async function reopenWeeklyReport(
 }
 
 /**
+ * Reopens a locked week for a specific member by finding their published report (EF-HEB-06, RG-06).
+ */
+export async function reopenMemberWeek(
+	db: Database,
+	params: {
+		operatorId: string;
+		memberId: string;
+		weekStart: string;
+		reason: string;
+	}
+): Promise<{ reportId: string }> {
+	const { operatorId, memberId, weekStart, reason } = params;
+
+	const [report] = await db
+		.select({ id: weeklyReports.id })
+		.from(weeklyReports)
+		.where(
+			and(
+				eq(weeklyReports.memberId, memberId),
+				eq(weeklyReports.weekStart, weekStart),
+				eq(weeklyReports.status, 'published')
+			)
+		);
+
+	if (!report) {
+		throw new Error('Aucun rapport hebdomadaire publié trouvé pour cette semaine.');
+	}
+
+	await reopenWeeklyReport(db, {
+		chefId: operatorId,
+		reportId: report.id,
+		reason
+	});
+
+	return { reportId: report.id };
+}
+
+/**
  * Loads team dashboard & weekly reports overview (EF-DAS-01..05, EF-HEB-01).
  */
 export async function getWeekReportsOverview(

@@ -2,9 +2,11 @@ import { error, fail } from '@sveltejs/kit';
 import { and, asc, desc, eq } from 'drizzle-orm';
 import { currentWeekStart, weekStartOf } from '#lib/domain/week.js';
 import { createTaskSchema, editTaskSchema } from '#lib/schemas/tasks.js';
+import { reopenReportSchema } from '#lib/schemas/reports.js';
 import { requireUser } from '#lib/server/auth/access.js';
 import { db } from '#lib/server/db/index.js';
 import { users } from '#lib/server/db/schema.js';
+import { reopenMemberWeek } from '#lib/server/reports.js';
 import {
 	carryOverTask,
 	createTasks,
@@ -185,6 +187,40 @@ export const actions: Actions = {
 			return { successMessage: `${count} tâche(s) dupliquée(s) vers la semaine suivante.` };
 		} catch (err) {
 			const message = err instanceof Error ? err.message : 'Erreur lors de la duplication';
+			return fail(400, { actionError: message });
+		}
+	},
+
+	reopenMemberWeek: async ({ request, locals, params }) => {
+		const chef = requireUser(locals, 'chef');
+		const weekStart = normalizeWeekParam(params.semaine);
+		const formData = await request.formData();
+		const memberId = String(formData.get('memberId') ?? '');
+		const reopenedReason = String(formData.get('reopenedReason') ?? '');
+
+		const parsed = reopenReportSchema.safeParse({ reopenedReason });
+		if (!parsed.success) {
+			return fail(400, {
+				actionError:
+					parsed.error.issues[0]?.message ??
+					'Le motif de réouverture est obligatoire (au moins 3 caractères).'
+			});
+		}
+
+		if (!memberId) {
+			return fail(400, { actionError: 'Membre non spécifié.' });
+		}
+
+		try {
+			await reopenMemberWeek(db, {
+				operatorId: chef.id,
+				memberId,
+				weekStart,
+				reason: parsed.data.reopenedReason
+			});
+			return { successMessage: 'Semaine rouverte avec succès pour ce membre.' };
+		} catch (err) {
+			const message = err instanceof Error ? err.message : 'Erreur lors de la réouverture.';
 			return fail(400, { actionError: message });
 		}
 	}
